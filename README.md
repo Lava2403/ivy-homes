@@ -1,112 +1,77 @@
-# 🏠 Ivy Homes – Real Estate Discovery Platform
+# Ivy Homes – Property Discovery Platform
 
-A responsive real estate discovery platform built using **React + Vite** that integrates with the Ivy Homes API to help users browse properties, rentals, residential projects, save favourite properties, and explore market insights.
+A React-based property discovery application built for the Ivy Homes frontend assignment.
 
-This project was built as part of the **Ivy Homes Frontend/API Assignment**.
+The application integrates with the Ivy Homes API to allow users to browse residential properties, explore rentals and projects, view detailed property information, save favourite properties, and view market insights calculated from live API data.
 
 ---
 
-## ✨ Features
+## 🚀 Live Application
 
-### 🔐 Authentication
+🔗 **Deployment:** Add your deployed application URL here
 
-- Login functionality using the provided demo accounts
-- JWT-based authentication
-- Access token management
-- Automatic access token refresh using refresh tokens
-- Protected routes for authenticated users
+---
 
-### 🏠 Property Listings
+## 📂 GitHub Repository
 
-- Browse thousands of property listings
+🔗 https://github.com/Lava2403/ivy-homes
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication
+
+- User login using the Ivy Homes API
+- Access and refresh token handling
+- Automatic token refresh when the access token expires
+- Protected application routes
+- Persistent authentication using `localStorage`
+
+---
+
+## 🏠 Property Listings
+
+- Browse thousands of residential properties
 - Search properties by locality
-- Filter by:
-  - BHK configuration
-  - Furnishing type
+- Filter properties by:
+  - BHK
+  - Furnishing status
   - Maximum price
 - Client-side pagination
 - Verified property indicators
-- Property pricing and area information
-- Individual property detail pages
-
-### ❤️ Saved Properties
-
 - Save properties to favourites
-- View saved properties
-- Remove properties from saved listings
-
-### 🏢 Residential Projects
-
-- Browse residential projects available through the API
-- View:
-  - Developer information
-  - Locality
-  - Project status
-  - Area range
-  - Price range
-  - Number of units
-  - Number of towers
-  - Reported listings
-
-### 🏘️ Rental Properties
-
-- Browse rental listings
-- Explore rental property details and pricing
-
-### 📊 Market Insights
-
-The application calculates useful market insights directly from the available API data, including:
-
-- Total property listings
-- Total rentals
-- Total residential projects
-- Average listing price
-- Number of verified listings
-- Number of live listings
 
 ---
 
-## 🛠️ Tech Stack
+## 🔎 Property Details
 
-- **React**
-- **Vite**
-- **React Router DOM**
-- **JavaScript**
-- **CSS**
-- **REST API**
-- **JWT Authentication**
+Users can view detailed information about an individual property including:
 
----
-
-## 🔌 API Integration
-
-The application integrates with the Ivy Homes API.
-
-### Main API Resources Used
-
-- `/auth/login`
-- `/auth/refresh`
-- `/v1/listings`
-- `/v1/listings/{id}`
-- `/v1/rentals`
-- `/v1/projects`
-- `/v1/saved`
-
-Authentication is handled using Bearer tokens along with the required API key header.
-
-The application automatically refreshes expired access tokens using the refresh token.
+- Property name
+- Locality
+- Property type
+- BHK configuration
+- Bathrooms
+- Balcony
+- Furnishing
+- Floor information
+- Carpet area
+- Price
+- Parking
+- Facing direction
+- Verification status
+- Property description
 
 ---
 
-## 🔐 Authentication Flow
+## ❤️ Saved Properties
 
-1. User logs in using their credentials.
-2. The API returns:
-   - Access token
-   - Refresh token
-3. Tokens are stored locally.
-4. API requests include:
+Users can save properties using the API.
+
+The working API endpoint discovered during API testing was:
 
 ```text
-Authorization: Bearer <access_token>
-X-API-Key: <api_key>
+POST /v1/saved
+GET /v1/saved
+DELETE /v1/saved/{listing_id}

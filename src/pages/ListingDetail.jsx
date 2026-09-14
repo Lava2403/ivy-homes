@@ -17,7 +17,6 @@ export default function ListingDetail() {
         setError("");
 
         const data = await apiRequest(`/v1/listings/${id}`);
-
         setListing(data);
       } catch (err) {
         setError(err.message || "Could not load listing");
@@ -51,13 +50,30 @@ export default function ListingDetail() {
   const formatMoney = (amount) => {
     if (amount === null || amount === undefined) return "N/A";
 
-    return `₹${Number(amount).toLocaleString("en-IN")}`;
+    const value = Number(amount);
+
+    if (Number.isNaN(value)) return "N/A";
+
+    return `₹${value.toLocaleString("en-IN")}`;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   if (loading) {
     return (
       <div className="page">
-        <h2>Loading property details...</h2>
+        <div className="loading-state">
+          <h2>Loading property details...</h2>
+          <p>Please wait while we fetch the property information.</p>
+        </div>
       </div>
     );
   }
@@ -65,12 +81,14 @@ export default function ListingDetail() {
   if (error) {
     return (
       <div className="page">
-        <h2>Could not load property</h2>
-        <p>{error}</p>
+        <div className="error-state">
+          <h2>Could not load property</h2>
+          <p>{error}</p>
 
-        <Link to="/listings">
-          ← Back to properties
-        </Link>
+          <Link to="/listings" className="back-link">
+            ← Back to properties
+          </Link>
+        </div>
       </div>
     );
   }
@@ -78,151 +96,171 @@ export default function ListingDetail() {
   if (!listing) {
     return (
       <div className="page">
-        <h2>Property not found</h2>
+        <div className="error-state">
+          <h2>Property not found</h2>
+
+          <Link to="/listings" className="back-link">
+            ← Back to properties
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="page">
-
-      <Link
-        to="/listings"
-        className="back-link"
-      >
+    <div className="page listing-detail-page">
+      <Link to="/listings" className="back-link">
         ← Back to properties
       </Link>
 
       <div className="detail-card">
 
+        {/* HEADER */}
         <div className="detail-header">
-          <div>
-            <span className="badge">
-              {listing.bedroom} BHK
-            </span>
-
-            {listing.is_verified && (
-              <span className="verified">
-                ✓ Verified
+          <div className="detail-title-section">
+            <div className="detail-tags">
+              <span className="badge">
+                {listing.bedroom} BHK
               </span>
-            )}
+
+              {listing.is_verified && (
+                <span className="verified">
+                  ✓ Verified
+                </span>
+              )}
+            </div>
 
             <h1>
               {listing.apartment_name || "Property"}
             </h1>
 
             <p className="locality">
-              📍 {listing.locality}
+              📍 {listing.locality || "Location not available"}
             </p>
+
+            <div className="detail-price">
+              {formatMoney(listing.price)}
+            </div>
           </div>
 
           <button
-            className="save-btn"
+            className="save-btn detail-save-btn"
             disabled={saving}
             onClick={saveListing}
           >
-            {saving
-              ? "Saving..."
-              : "♡ Save Property"}
+            {saving ? "Saving..." : "♡ Save Property"}
           </button>
         </div>
 
-        <div className="detail-price">
-          {formatMoney(listing.price)}
-        </div>
+        {/* PROPERTY DETAILS */}
+        <section className="detail-section">
+          <h2>Property Details</h2>
 
-        <div className="detail-grid">
+          <div className="detail-grid">
 
-          <div>
-            <strong>Bedrooms</strong>
-            <p>{listing.bedroom}</p>
+            <div className="detail-item">
+              <span>Bedrooms</span>
+              <strong>{listing.bedroom ?? "N/A"}</strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Bathrooms</span>
+              <strong>{listing.bathroom ?? "N/A"}</strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Balconies</span>
+              <strong>{listing.balcony ?? "N/A"}</strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Carpet Area</span>
+              <strong>
+                {listing.carpet_area
+                  ? `${listing.carpet_area} sqft`
+                  : "N/A"}
+              </strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Property Type</span>
+              <strong>{listing.property_type || "N/A"}</strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Furnishing</span>
+              <strong>{listing.furnishing || "N/A"}</strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Facing</span>
+              <strong>
+                {listing.facing_direction || "N/A"}
+              </strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Floor</span>
+              <strong>
+                {listing.floor ?? "N/A"} of{" "}
+                {listing.total_floors ?? "N/A"}
+              </strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Parking</span>
+              <strong>
+                {listing.covered_parking ?? 0} covered
+              </strong>
+            </div>
+
+            <div className="detail-item">
+              <span>Posted By</span>
+              <strong>
+                {listing.posted_by_name ||
+                  listing.posted_by ||
+                  "N/A"}
+              </strong>
+            </div>
+
           </div>
+        </section>
 
-          <div>
-            <strong>Bathrooms</strong>
-            <p>{listing.bathroom}</p>
-          </div>
-
-          <div>
-            <strong>Balconies</strong>
-            <p>{listing.balcony ?? "N/A"}</p>
-          </div>
-
-          <div>
-            <strong>Carpet Area</strong>
-            <p>{listing.carpet_area} sqft</p>
-          </div>
-
-          <div>
-            <strong>Property Type</strong>
-            <p>{listing.property_type}</p>
-          </div>
-
-          <div>
-            <strong>Furnishing</strong>
-            <p>{listing.furnishing}</p>
-          </div>
-
-          <div>
-            <strong>Facing</strong>
-            <p>{listing.facing_direction || "N/A"}</p>
-          </div>
-
-          <div>
-            <strong>Floor</strong>
-            <p>
-              {listing.floor ?? "N/A"} of{" "}
-              {listing.total_floors ?? "N/A"}
-            </p>
-          </div>
-
-          <div>
-            <strong>Parking</strong>
-            <p>
-              {listing.covered_parking ?? 0} covered
-            </p>
-          </div>
-
-          <div>
-            <strong>Posted By</strong>
-            <p>
-              {listing.posted_by_name ||
-                listing.posted_by ||
-                "N/A"}
-            </p>
-          </div>
-
-        </div>
-
-        <div className="detail-section">
+        {/* DESCRIPTION */}
+        <section className="detail-section">
           <h2>Description</h2>
 
-          <p>
+          <p className="detail-description">
             {listing.description ||
-              "No description available."}
+              "No description available for this property."}
           </p>
-        </div>
+        </section>
 
-        <div className="detail-section">
+        {/* LISTING INFORMATION */}
+        <section className="detail-section listing-information">
           <h2>Listing Information</h2>
 
-          <p>
-            <strong>Listing ID:</strong>{" "}
-            {listing.listing_id}
-          </p>
+          <div className="listing-info-grid">
 
-          <p>
-            <strong>Posted:</strong>{" "}
-            {listing.posted_at || "N/A"}
-          </p>
+            <div>
+              <span>Listing ID</span>
+              <strong>{listing.listing_id}</strong>
+            </div>
 
-          <p>
-            <strong>Status:</strong>{" "}
-            {listing.is_live
-              ? "Live"
-              : "Not live"}
-          </p>
-        </div>
+            <div>
+              <span>Posted On</span>
+              <strong>{formatDate(listing.posted_at)}</strong>
+            </div>
+
+            <div>
+              <span>Status</span>
+              <strong className={listing.is_live ? "live-status" : ""}>
+                {listing.is_live ? "● Live" : "Not Live"}
+              </strong>
+            </div>
+
+          </div>
+        </section>
 
       </div>
     </div>

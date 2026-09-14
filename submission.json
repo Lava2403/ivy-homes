@@ -1,0 +1,275 @@
+{
+  "api_key": "IVY26-268F2047690B",
+  "candidate": {
+    "name": "Lavanya Agarwal",
+    "email": "lavanyaagrawal2403@gmail.com",
+    "repo_url": "https://github.com/Lava2403/ivy-homes",
+    "demo_url": "https://ivy-homes-puce.vercel.app"
+  },
+  "answers": {
+    "total_listing_records": 4700,
+    "unique_properties": 4380,
+    "active_listings": 3722,
+    "corrupt_listing_ids": [
+      "100-1001077",
+      "100-1002346",
+      "100-1002442",
+      "100-1002884",
+      "100-1003117",
+      "DWE-1001165",
+      "DWE-1001183",
+      "DWE-1001909",
+      "DWE-1003673",
+      "MAG-1000179",
+      "MAG-1000885",
+      "MAG-1003269",
+      "MAG-1003510",
+      "SQU-1000979",
+      "SQU-1002843",
+      "SQU-1003177",
+      "ZER-1000500",
+      "ZER-1001207",
+      "ZER-1001249",
+      "ZER-1001334",
+      "ZER-1002632",
+      "ZER-1002667",
+      "ZER-1002911",
+      "ZER-1003426"
+    ],
+    "total_monthly_rent": 7079400,
+    "avg_price_per_sqft_2bhk": 21089.45,
+    "costliest_project": {
+      "project_id": "P10255",
+      "price_max_inr": 48900000
+    },
+    "listings_last_7_days": 149,
+    "fake_listing_ids": [
+      "100-1002501",
+      "DWE-1002631",
+      "DWE-1003102",
+      "MAG-1003492",
+      "SQU-1001431",
+      "SQU-1003524",
+      "ZER-1003652",
+      "ZER-1003813"
+    ],
+    "projects_with_wrong_listing_count": 392
+  },
+  "findings": [
+    {
+      "endpoint": "*",
+      "category": "auth",
+      "documented": "Every request carries api_key as a query parameter.",
+      "actual": "Protected requests reject api_key in the query string and require the key in the X-API-Key request header.",
+      "how_found": "Called protected endpoints with api_key as a query parameter and reproduced the 401 error instructing the client to send X-API-Key instead; repeated the requests successfully with the header.",
+      "impact": "Clients following the documentation cannot access protected endpoints.",
+      "evidence": []
+    },
+    {
+      "endpoint": "/auth/login",
+      "category": "auth",
+      "documented": "Login returns a token valid for 86400 seconds and there is no refresh flow.",
+      "actual": "Login returns access_token and refresh_token, expires_in is 900 seconds, and /auth/refresh is provided for session renewal.",
+      "how_found": "Logged in with a demo account and inspected the real response; also reproduced an expired-token response and successfully renewed the session through /auth/refresh.",
+      "impact": "A client built for the documented 24-hour token lifetime will stop working after about 15 minutes unless it implements refresh.",
+      "evidence": []
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "completeness",
+      "documented": "Returns active sale listings only; inactive, expired and withdrawn listings are excluded server side.",
+      "actual": "The retrievable dataset contains both live and non-live records: 3722 of 4700 records have is_live true.",
+      "how_found": "Paged the endpoint to the end and counted is_live values in every retrievable record.",
+      "impact": "The UI must explicitly handle inactive records rather than assuming every returned listing is active.",
+      "evidence": [
+        "MAG-1002627",
+        "100-1003403",
+        "MAG-1003078",
+        "DWE-1004037",
+        "SQU-1003074"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "duplicates",
+      "documented": "Every listing_id is globally unique, and each listing corresponds to exactly one physical property.",
+      "actual": "4700 listing records describe 4380 distinct physical properties; multiple records can describe the same physical property.",
+      "how_found": "Grouped records using stable physical-property location fields and inspected repeated coordinate/property groups.",
+      "impact": "Record counts overstate the number of distinct properties and duplicate records must be accounted for in analysis.",
+      "evidence": [
+        "100-1002951",
+        "ZER-1001423",
+        "100-1003394",
+        "ZER-1001994",
+        "MAG-1000037",
+        "MAG-1001683",
+        "SQU-1000295",
+        "SQU-1000521",
+        "SQU-1003769",
+        "MAG-1000064",
+        "SQU-1000375",
+        "DWE-1002253",
+        "MAG-1000600",
+        "DWE-1000077",
+        "MAG-1000514",
+        "SQU-1001191",
+        "MAG-1000334"
+      ]
+    },
+    {
+      "endpoint": "/v1/listing/{id}",
+      "category": "missing_endpoint",
+      "documented": "A single listing is available at /v1/listing/{listing_id}.",
+      "actual": "The documented path returns 404 Not Found.",
+      "how_found": "Requested /v1/listing/MAG-1002627 while authenticated.",
+      "impact": "Listing detail pages cannot be implemented using the documented path.",
+      "evidence": []
+    },
+    {
+      "endpoint": "/v1/listings/{id}",
+      "category": "undocumented_endpoint",
+      "documented": "The documentation does not list /v1/listings/{id} as the single-listing endpoint.",
+      "actual": "/v1/listings/{id} returns the listing detail object.",
+      "how_found": "Probed candidate detail routes after the documented singular route returned 404 and verified the plural route returned the listing.",
+      "impact": "This is the working route required for URL-based listing detail pages.",
+      "evidence": []
+    },
+    {
+      "endpoint": "/v1/favourites",
+      "category": "missing_endpoint",
+      "documented": "GET and POST /v1/favourites and DELETE /v1/favourites/{id} provide saved-listing functionality.",
+      "actual": "The documented favourites routes return 404 Not Found.",
+      "how_found": "Requested the documented favourites routes directly while authenticated.",
+      "impact": "The documented saved-listing implementation cannot work.",
+      "evidence": []
+    },
+    {
+      "endpoint": "/v1/saved",
+      "category": "undocumented_endpoint",
+      "documented": "The documentation does not describe /v1/saved.",
+      "actual": "GET /v1/saved lists saved listings, POST /v1/saved with listing_id saves a listing, and DELETE /v1/saved/{id} removes it.",
+      "how_found": "Probed plausible saved-listing routes and verified the working route with a real demo account.",
+      "impact": "This undocumented route family is required to implement persistent per-user saved listings.",
+      "evidence": [
+        "MAG-1002627"
+      ]
+    },
+    {
+      "endpoint": "/v1/analytics/summary",
+      "category": "missing_endpoint",
+      "documented": "Provides pre-computed aggregates for the city.",
+      "actual": "The documented endpoint returns 404 Not Found.",
+      "how_found": "Requested the documented path while authenticated.",
+      "impact": "The insights screen must calculate aggregates from the available collection endpoints instead.",
+      "evidence": []
+    },
+    {
+      "endpoint": "/v1/projects",
+      "category": "units",
+      "documented": "price_min and price_max are integer rupee values everywhere.",
+      "actual": "Observed project price values use compact real-estate units rather than raw rupee integers; the values require unit interpretation to represent realistic INR prices.",
+      "how_found": "Compared project price scales against listing price scales and inspected representative project records.",
+      "impact": "Displaying project price values as literal rupees produces nonsensical prices and incorrect project comparisons.",
+      "evidence": [
+        "P10255",
+        "P10068",
+        "P10001",
+        "P10415",
+        "P10016"
+      ]
+    },
+    {
+      "endpoint": "/v1/projects",
+      "category": "consistency",
+      "documented": "total_listings is recomputed and always agrees with the number of listings available for the project.",
+      "actual": "392 projects have a reported total_listings value different from the count of retrievable listing records carrying that project_id.",
+      "how_found": "Paged all listings and projects, grouped listings by project_id, and compared each count with the project's total_listings.",
+      "impact": "Project availability counts cannot be trusted without independent verification.",
+      "evidence": [
+        "P10001",
+        "P10002",
+        "P10003",
+        "P10004",
+        "P10005",
+        "P10006",
+        "P10007",
+        "P10008",
+        "P10009",
+        "P10011",
+        "P10012",
+        "P10013",
+        "P10014",
+        "P10015",
+        "P10016",
+        "P10017",
+        "P10018",
+        "P10019",
+        "P10020",
+        "P10021"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "data_quality",
+      "documented": "Returned listing data is safe to show and the reference describes normal property records.",
+      "actual": "24 records contain impossible values such as non-positive prices, floor numbers above total_floors, or carpet area greater than super built-up area.",
+      "how_found": "Ran invariant checks across every retrievable listing record.",
+      "impact": "These records distort aggregates and must be excluded from calculations such as price per square foot.",
+      "evidence": [
+        "100-1001077",
+        "100-1002346",
+        "100-1002442",
+        "100-1002884",
+        "100-1003117",
+        "DWE-1001165",
+        "DWE-1001183",
+        "DWE-1001909",
+        "DWE-1003673",
+        "MAG-1000179",
+        "MAG-1000885",
+        "MAG-1003269",
+        "MAG-1003510",
+        "SQU-1000979",
+        "SQU-1002843",
+        "SQU-1003177",
+        "ZER-1000500",
+        "ZER-1001207",
+        "ZER-1001249",
+        "ZER-1001334"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "fraud",
+      "documented": "Listings are genuine sale listings.",
+      "actual": "Eight listings use implausibly tiny sale prices for otherwise normal Bangalore residential properties and appear to exist to generate enquiries rather than represent genuine sale offers.",
+      "how_found": "Sorted sale prices across the complete dataset and inspected extreme low-price outliers relative to property type, bedroom count and area.",
+      "impact": "These records materially distort price analytics and should be excluded from market calculations.",
+      "evidence": [
+        "100-1002501",
+        "DWE-1002631",
+        "DWE-1003102",
+        "MAG-1003492",
+        "SQU-1001431",
+        "SQU-1003524",
+        "ZER-1003652",
+        "ZER-1003813"
+      ]
+    },
+    {
+      "endpoint": "/v1/listings",
+      "category": "timestamps",
+      "documented": "Timestamps are ISO 8601 UTC with a Z suffix everywhere in the API.",
+      "actual": "Listing posted_at values are returned without a timezone suffix or explicit UTC offset, while rental timestamps include Z.",
+      "how_found": "Compared posted_at formats across the complete listings and rentals datasets.",
+      "impact": "Clients cannot blindly apply the documented universal UTC/Z convention and must interpret listing timestamps carefully for time-window calculations.",
+      "evidence": [
+        "MAG-1002627",
+        "100-1003403",
+        "MAG-1003078",
+        "DWE-1004037",
+        "SQU-1003074"
+      ]
+    }
+  ]
+}
